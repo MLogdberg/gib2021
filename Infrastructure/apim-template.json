@@ -1,0 +1,135 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+
+        "apimName": {
+            "type": "string"            
+        },
+        "appInsightsName": {
+            "type": "string"
+        },
+        "appInsightsResourceGroupName": {
+            "type": "string"
+        },
+        "organizationName": {
+            "type": "string",
+            "defaultValue" : "MLogdberg"
+        },
+        "adminEmail": {
+            "type": "string",
+            "defaultValue" : "mattias@mlogdberg.com"
+        },
+        "location": {
+            "type": "string",
+            "defaultValue" : "northeurope"
+        },
+        "tier": {
+            "type": "string",
+            "defaultValue" : "Consumption"
+        },
+        "capacity": {
+            "type": "string",
+            "defaultValue" : ""
+        },
+        "identity": {
+            "type": "object",
+            "defaultValue" : {
+                "type": "SystemAssigned"
+            }
+        },
+        "http2": {
+            "type": "bool",
+            "defaultValue" : false
+        },
+        "clientTls11": {
+            "type": "bool",
+            "defaultValue" : false
+        },
+        "clientTls10": {
+            "type": "bool",
+            "defaultValue" : false
+        },
+        "backendTls11": {
+            "type": "bool",
+            "defaultValue" : false
+        },
+        "backendTls10": {
+            "type": "bool",
+            "defaultValue" : false
+        },
+        "backendSsl30": {
+            "type": "bool",
+            "defaultValue" : false
+        },
+        "tagsByResource": {
+            "type": "object",
+            "defaultValue" : {}
+        }
+    },
+    "variables": {
+        "customPropertiesConsumption": {
+            "Microsoft.WindowsAzure.ApiManagement.Gateway.Security.Protocols.Tls11": "[parameters('clientTls11')]",
+            "Microsoft.WindowsAzure.ApiManagement.Gateway.Security.Protocols.Tls10": "[parameters('clientTls10')]",
+            "Microsoft.WindowsAzure.ApiManagement.Gateway.Security.Backend.Protocols.Tls11": "[parameters('backendTls11')]",
+            "Microsoft.WindowsAzure.ApiManagement.Gateway.Security.Backend.Protocols.Tls10": "[parameters('backendTls10')]",
+            "Microsoft.WindowsAzure.ApiManagement.Gateway.Security.Backend.Protocols.Ssl30": "[parameters('backendSsl30')]",
+            "Microsoft.WindowsAzure.ApiManagement.Gateway.Protocols.Server.Http2": "[parameters('http2')]"
+        }
+    },
+    "resources": [
+        {
+            "type": "Microsoft.ApiManagement/service",
+            "apiVersion": "2019-01-01",
+            "name": "[parameters('apimName')]",
+            "location": "[parameters('location')]",
+            "sku": {
+                "name": "[parameters('tier')]",
+                "capacity": "[parameters('capacity')]"
+            },
+            "identity": "[parameters('identity')]",
+            "tags": "[ if(contains(parameters('tagsByResource'), 'Microsoft.ApiManagement/service'), parameters('tagsByResource')['Microsoft.ApiManagement/service'], json('{}')) ]",
+            "properties": {
+                "publisherEmail": "[parameters('adminEmail')]",
+                "publisherName": "[parameters('organizationName')]",                
+                "customProperties": "[variables('customPropertiesConsumption')]"
+            },
+            "dependsOn": [
+            ],
+            "resources": [
+                {
+                    "type": "loggers",
+                    "apiVersion": "2019-01-01",
+                    "name": "[parameters('appInsightsName')]",
+                    "dependsOn": [
+                        "[concat('Microsoft.ApiManagement/service/', parameters('apimName'))]"
+                    ],
+                    "properties": {
+                        "loggerType": "applicationInsights",
+                        "resourceId": "[resourceid(parameters('appInsightsResourceGroupName'),'microsoft.insights/components',parameters('appInsightsName'))]",
+                        "credentials": {
+                            "instrumentationKey": "[reference(resourceId(subscription().subscriptionId,parameters('appInsightsResourceGroupName'),'microsoft.insights/components/',parameters('appInsightsName')), '2015-05-01').InstrumentationKey]"
+                        }
+                    }
+                },
+                {
+                    "type": "diagnostics",
+                    "apiVersion": "2019-01-01",
+                    "name": "applicationinsights",
+                    "dependsOn": [
+                        "[concat('Microsoft.ApiManagement/service/', parameters('apimName'))]",
+                        "[concat('Microsoft.ApiManagement/service/', parameters('apimName'), '/loggers/', parameters('appInsightsName'))]"
+                    ],
+                    "properties": {
+                        "loggerId": "[concat('/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.ApiManagement/service/', parameters('apimName'), '/loggers/', parameters('appInsightsName'))]",
+                        "alwaysLog": "allErrors",
+                        "sampling": {
+                            "percentage": 100,
+                            "samplingType": "fixed"
+                        }
+                    }
+                }
+            ]
+        }
+    ]
+}

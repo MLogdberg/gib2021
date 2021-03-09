@@ -1,0 +1,44 @@
+{
+  "$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "keyVaultName": {
+      "type": "string",
+      "defaultValue": "kvName"
+    },
+    "resourceResourceGroupName": {
+      "type": "string",
+      "defaultValue": "resouregrup"
+    },
+    "resourceName": {
+      "type": "string",
+      "defaultValue": "resourcename"
+    },
+    "resourceType": {
+      "type": "string",
+      "defaultValue": "Microsoft.Web/sites"
+    },
+    "permissions": {
+      "type": "array",
+      "defaultValue": [ "get","list" ]
+    }
+  },
+  "resources": [
+    {
+      "type": "Microsoft.KeyVault/vaults/accessPolicies",
+      "name": "[concat(parameters('keyVaultName'), '/add')]",
+      "apiVersion": "2018-02-14",
+      "properties": {
+        "accessPolicies": [
+          {
+            "tenantId": "[subscription().tenantId]",
+            "objectId": "[reference(resourceId(parameters('resourceResourceGroupName'),parameters('resourceType'), parameters('resourceName')), providers(split(parameters('resourceType'),'/')[0],split(parameters('resourceType'),'/')[1]).apiVersions[0], 'Full').identity.principalId]",
+            "permissions": {
+              "secrets": "[parameters('permissions')]"
+            }
+          }
+        ]
+      }
+    }
+  ]
+}

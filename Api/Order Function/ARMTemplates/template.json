@@ -1,0 +1,143 @@
+{
+  "$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "name": {
+      "type": "string"
+    },
+    "appInsightName": {
+      "type": "string"
+    },
+    "appInsightResourceGroupName": {
+      "type": "string"
+    },
+    "cosmosDbAccount": {
+      "type": "string"
+    },
+    "cosmosDbResourceGroup": {
+      "type": "string",
+      "defaultValue": "microservice"
+    },
+    "location": {
+      "type": "string",
+      "defaultValue": "North Europe"
+    },
+    "hostingEnvironment": {
+      "type": "string",
+      "defaultValue": ""
+    },
+    "hostingPlanName": {
+      "type": "string",
+      "defaultValue": "ASP-DemoOrderRG-b08f"
+    },
+    "storageAccountName": {
+      "type": "string",
+      "defaultValue": "fa001orderapistor"
+    },
+    "sku": {
+      "type": "string",
+      "defaultValue": "Dynamic"
+    },
+    "skuCode": {
+      "type": "string",
+      "defaultValue": "Y1"
+    },
+    "workerSize": {
+      "type": "string",
+      "defaultValue": "0"
+    },
+    "workerSizeId": {
+      "type": "string",
+      "defaultValue": "0"
+    },
+    "numberOfWorkers": {
+      "type": "string",
+      "defaultValue": "1"
+    }
+  },
+  "resources": [
+    {
+      "apiVersion": "2018-11-01",
+      "name": "[parameters('name')]",
+      "type": "Microsoft.Web/sites",
+      "kind": "functionapp",
+      "location": "[parameters('location')]",
+      "tags": {},
+      "dependsOn": [
+        "[concat('Microsoft.Web/serverfarms/', parameters('hostingPlanName'))]",
+        "[concat('Microsoft.Storage/storageAccounts/', parameters('storageAccountName'))]"
+      ],
+      "properties": {
+        "name": "[parameters('name')]",
+        "siteConfig": {
+          "appSettings": [
+            {
+              "name": "FUNCTIONS_EXTENSION_VERSION",
+              "value": "~3"
+            },
+            {
+              "name": "FUNCTIONS_WORKER_RUNTIME",
+              "value": "dotnet"
+            },
+            {
+              "name": "APPINSIGHTS_INSTRUMENTATIONKEY",
+              "value": "[reference(resourceId(subscription().subscriptionId,parameters('appInsightResourceGroupName'),'microsoft.insights/components/',parameters('appInsightName')), '2015-05-01').InstrumentationKey]"
+            },
+            {
+              "name": "APPLICATIONINSIGHTS_CONNECTION_STRING",
+              "value": "[reference(resourceId(subscription().subscriptionId,parameters('appInsightResourceGroupName'),'microsoft.insights/components/',parameters('appInsightName')), '2015-05-01').ConnectionString]"
+            },
+            {
+              "name": "AzureWebJobsStorage",
+              "value": "[concat('DefaultEndpointsProtocol=https;AccountName=',parameters('storageAccountName'),';AccountKey=',listKeys(resourceId('Microsoft.Storage/storageAccounts', parameters('storageAccountName')), '2019-06-01').keys[0].value,';EndpointSuffix=','core.windows.net')]"
+            },
+            {
+              "name": "WEBSITE_CONTENTAZUREFILECONNECTIONSTRING",
+              "value": "[concat('DefaultEndpointsProtocol=https;AccountName=',parameters('storageAccountName'),';AccountKey=',listKeys(resourceId('Microsoft.Storage/storageAccounts', parameters('storageAccountName')), '2019-06-01').keys[0].value,';EndpointSuffix=','core.windows.net')]"
+            },
+            {
+              "name": "cosmosConnection",
+              "value": "[concat('AccountEndpoint=https://', parameters('cosmosDbAccount'), '.documents.azure.com:443/;AccountKey=', listKeys(resourceId(subscription().subscriptionId,parameters('cosmosDbResourceGroup') ,'Microsoft.DocumentDB/databaseAccounts', parameters('cosmosDbAccount')), '2019-08-01').primaryMasterKey, ';')]"
+            }
+          ]
+        },
+        "serverFarmId": "[concat('/subscriptions/', subscription().subscriptionId,'/resourcegroups/',resourceGroup().name, '/providers/Microsoft.Web/serverfarms/', parameters('hostingPlanName'))]",
+        "hostingEnvironment": "[parameters('hostingEnvironment')]",
+        "clientAffinityEnabled": true
+      }
+    },
+    {
+      "apiVersion": "2018-11-01",
+      "name": "[parameters('hostingPlanName')]",
+      "type": "Microsoft.Web/serverfarms",
+      "location": "[parameters('location')]",
+      "kind": "",
+      "tags": {},
+      "dependsOn": [],
+      "properties": {
+        "name": "[parameters('hostingPlanName')]",
+        "workerSize": "[parameters('workerSize')]",
+        "workerSizeId": "[parameters('workerSizeId')]",
+        "numberOfWorkers": "[parameters('numberOfWorkers')]",
+        "hostingEnvironment": "[parameters('hostingEnvironment')]"
+      },
+      "sku": {
+        "Tier": "[parameters('sku')]",
+        "Name": "[parameters('skuCode')]"
+      }
+    },
+    {
+      "apiVersion": "2019-06-01",
+      "type": "Microsoft.Storage/storageAccounts",
+      "name": "[parameters('storageAccountName')]",
+      "location": "[parameters('location')]",
+      "tags": {},
+      "sku": {
+        "name": "Standard_LRS"
+      },
+      "properties": {
+        "supportsHttpsTrafficOnly": true
+      }
+    }
+  ]
+}

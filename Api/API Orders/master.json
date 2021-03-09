@@ -1,0 +1,62 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "environment": {
+      "type": "string",
+      "allowedValues": [ "dev", "test", "prod" ],
+      "defaultValue": "dev"
+    },
+    "containerSasToken": { "type": "string" },
+    "containerUri": { "type": "string" },
+    "containerBlobPrefix": { "type": "string" },
+    "FunctionAppName": {
+      "type": "string",
+      "defaultValue": "FA-001-OrderAPI"
+    },
+     "FunctionResourceGroupName": {
+      "type": "string",
+      "defaultValue": "INT001-Orders"
+    },
+    "Functionkey" : {
+      "type": "string",
+      "defaultValue": "INT001-Orders"
+    }
+  },
+  "variables": {
+     "FunctionName": "[concat(parameters('FunctionAppName'),'-',parameters('environment'))]",
+    "StorageTemplate": "[uri(parameters('containerUri'), concat(parameters('containerBlobPrefix'),'/','mlogdberg.json') )]",
+    "ApiManagementInstance" : "[concat('MLogdberg-',parameters('environment'),'-api')]"
+  },
+  "resources": [
+    {
+      "apiVersion": "2017-05-10",
+      "name": "[variables('ApiManagementInstance')]",
+      "type": "Microsoft.Resources/deployments",      
+      "properties": {
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "[concat(variables('StorageTemplate'), parameters('containerSasToken'))]",
+          "contentVersion": "1.0.0.0"
+        },
+        "parameters": {
+          "service_mlogdberg_name": {
+            "value": "[variables('ApiManagementInstance')]"
+          },
+          "fa-001-orderapi_resourceGroup" : {
+            "value" : "[parameters('FunctionResourceGroupName')]"
+          },
+          "fa-001-orderapi_siteName" : {
+            "value" : "[variables('FunctionName')]"
+          },
+          "functionkey" : {
+              "value" : "[parameters('Functionkey')]"
+          }
+        }
+      },
+      "dependsOn": [
+      ]
+    }
+  ],
+  "outputs": {}
+}

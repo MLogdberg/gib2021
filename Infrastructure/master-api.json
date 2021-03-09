@@ -1,0 +1,84 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "environment": {
+      "type": "string",
+      "allowedValues": [ "dev", "test", "prod" ],
+      "defaultValue": "dev"
+    },
+    "containerSasToken": { "type": "string" },
+    "containerUri": { "type": "string" },
+    "containerBlobPrefix": { "type": "string" }
+  },
+  "variables": {
+    "SharedResourceGroupName": "[concat('MLogdberg-',parameters('environment'),'-shared-rg')]",
+
+    "AppInsightName": "[concat('mlogdberg-ai-',parameters('environment'))]",
+
+    "ApimTemplate": "[uri(parameters('containerUri'), concat(parameters('containerBlobPrefix'),'/','apim-template.json') )]",
+    "ApimName": "[concat('MLogdberg-',parameters('environment'),'-api')]",
+    "ApimResourceGroupName": "[concat('MLogdberg-',parameters('environment'),'-api-rg')]",
+
+    "KvPermissionsTemplate": "[uri(parameters('containerUri'), concat(parameters('containerBlobPrefix'),'/','kv-permission-template.json') )]",
+    "KeyVaultName": "[concat('MLogdberg-',parameters('environment'),'-kv')]"
+  },
+  "resources": [
+    {
+      "apiVersion": "2017-05-10",
+      "name": "[variables('ApimName')]",
+      "resourceGroup": "[variables('ApimResourceGroupName')]",
+      "type": "Microsoft.Resources/deployments",
+      "properties": {
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "[concat(variables('ApimTemplate'), parameters('containerSasToken'))]",
+          "contentVersion": "1.0.0.0"
+        },
+        "parameters": {
+          "apimName": {
+            "value": "[variables('ApimName')]"
+          },
+          "appInsightsName": {
+            "value": "[variables('AppInsightName')]"
+          },
+          "appInsightsResourceGroupName": {
+            "value": "[variables('SharedResourceGroupName')]"
+          }
+        }
+      },
+      "dependsOn": [
+      ]
+    },
+    {
+      "apiVersion": "2017-05-10",
+      "name": "[variables('KeyVaultName')]",
+      "resourceGroup": "[variables('SharedResourceGroupName')]",
+      "type": "Microsoft.Resources/deployments",
+      "properties": {
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "[concat(variables('KvPermissionsTemplate'), parameters('containerSasToken'))]",
+          "contentVersion": "1.0.0.0"
+        },
+        "parameters": {
+          "keyVaultName": {
+            "value": "[variables('KeyVaultName')]"
+          },
+          "resourceName": {
+            "value": "[variables('ApimName')]"
+          },
+          "resourceResourceGroupName": {
+            "value": "[variables('ApimResourceGroupName')]"
+          },
+          "resourceType": {
+            "value": "Microsoft.ApiManagement/service"
+          }
+        }
+      },
+      "dependsOn": [
+      ]
+    }
+  ],
+  "outputs": {}
+}

@@ -1,0 +1,70 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "environment": {
+      "type": "string",
+      "allowedValues": [ "dev", "test", "prod" ],
+      "defaultValue": "dev"
+    },
+    "containerSasToken": { "type": "string" },
+    "containerUri": { "type": "string" },
+    "containerBlobPrefix": { "type": "string" },
+    "FunctionAppName": {
+      "type": "string",
+      "defaultValue": "INT001-Orders"
+    },
+    "CosmosDbAccount" : {
+       "type": "string",
+      "defaultValue": "mlogdberg"
+    },
+    "CosmosDbResourceGroup" : {
+       "type": "string",
+      "defaultValue": "microservice"
+    }
+  },
+  "variables": {
+    "FunctionName": "[concat(parameters('FunctionAppName'),'-',parameters('environment'))]",
+    "StorageTemplate": "[uri(parameters('containerUri'), concat(parameters('containerBlobPrefix'),'/','template.json') )]",
+    "AppInsightName" : "[concat('mlogdberg-ai-',parameters('environment'))]",
+    "AppInsightResourceGroupName" : "[concat('MLogdberg-',parameters('environment'),'-shared-rg')]",
+    "StorageAccountName" : "[concat('fa001orderstor',toLower(parameters('environment')))]"
+  },
+  "resources": [
+    {
+      "apiVersion": "2017-05-10",
+      "name": "[variables('FunctionName')]",
+      "type": "Microsoft.Resources/deployments",      
+      "properties": {
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "[concat(variables('StorageTemplate'), parameters('containerSasToken'))]",
+          "contentVersion": "1.0.0.0"
+        },
+        "parameters": {
+          "name": {
+            "value": "[variables('FunctionName')]"
+          },
+          "appInsightName": {
+            "value": "[variables('AppInsightName')]"
+          },
+          "appInsightResourceGroupName" : {
+             "value": "[variables('AppInsightResourceGroupName')]"
+          },
+          "cosmosDbAccount": {
+            "value": "[parameters('CosmosDbAccount')]"
+          },
+          "cosmosDbResourceGroup" : {
+            "value": "[parameters('CosmosDbResourceGroup')]"
+          },
+          "storageAccountName" : {
+            "value": "[variables('StorageAccountName')]"
+          }
+        }
+      },
+      "dependsOn": [
+      ]
+    }
+  ],
+  "outputs": {}
+}

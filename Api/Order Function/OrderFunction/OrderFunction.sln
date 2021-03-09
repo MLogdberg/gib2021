@@ -1,0 +1,25 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 16
+VisualStudioVersion = 16.0.30011.22
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "OrderFunction", "OrderFunction.csproj", "{F5E2C58C-4FD7-446C-AF02-A33738389318}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{F5E2C58C-4FD7-446C-AF02-A33738389318}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{F5E2C58C-4FD7-446C-AF02-A33738389318}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{F5E2C58C-4FD7-446C-AF02-A33738389318}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{F5E2C58C-4FD7-446C-AF02-A33738389318}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {8EC7A092-5407-4E1F-8A66-98738D71CE6B}
+	EndGlobalSection
+EndGlobal

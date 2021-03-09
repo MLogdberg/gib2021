@@ -1,0 +1,120 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "environment": {
+      "type": "string",
+      "allowedValues": [ "dev", "test", "prod" ],
+      "defaultValue": "dev"
+    },
+    "containerSasToken": { "type": "string" },
+    "containerUri": { "type": "string" },
+    "containerBlobPrefix": { "type": "string" }
+  },
+  "variables": {
+    "SharedResourceGroupName": "[concat('MLogdberg-',parameters('environment'),'-shared-rg')]",
+
+    "StorageTemplate": "[uri(parameters('containerUri'), concat(parameters('containerBlobPrefix'),'/','storage-template.json') )]",
+    "StorageAccountName": "[concat('mlogdbergshared',toLower(parameters('environment')))]",
+
+    "AppInisghtsTemplate": "[uri(parameters('containerUri'), concat(parameters('containerBlobPrefix'),'/','ai-template.json') )]",
+    "AppInsightName": "[concat('mlogdberg-ai-',parameters('environment'))]",
+
+    "LogTemplate": "[uri(parameters('containerUri'), concat(parameters('containerBlobPrefix'),'/','log-template.json') )]",
+    "LogName": "[concat('MLogdberg-',parameters('environment'),'-log')]",
+
+    "KeyVaultTemplate": "[uri(parameters('containerUri'), concat(parameters('containerBlobPrefix'),'/','kv-template.json') )]",
+    "KeyVaultName": "[concat('MLogdberg-',parameters('environment'),'-kv')]"
+  },
+  "resources": [
+     {
+      "apiVersion": "2017-05-10",
+      "name": "[variables('KeyVaultName')]",
+      "resourceGroup": "[variables('SharedResourceGroupName')]",
+      "type": "Microsoft.Resources/deployments",
+      "properties": {
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "[concat(variables('KeyVaultTemplate'), parameters('containerSasToken'))]",
+          "contentVersion": "1.0.0.0"
+        },
+        "parameters": {
+          "name": {
+            "value": "[variables('KeyVaultName')]"
+          }
+        }
+      },
+      "dependsOn": [
+      ]
+    },
+    {
+      "apiVersion": "2017-05-10",
+      "name": "[variables('StorageAccountName')]",
+      "resourceGroup": "[variables('SharedResourceGroupName')]",
+      "type": "Microsoft.Resources/deployments",
+      "properties": {
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "[concat(variables('StorageTemplate'), parameters('containerSasToken'))]",
+          "contentVersion": "1.0.0.0"
+        },
+        "parameters": {
+          "storageAccountName": {
+            "value": "[variables('StorageAccountName')]"
+          }
+        }
+      },
+      "dependsOn": [
+      ]
+    },
+    {
+      "apiVersion": "2017-05-10",
+      "name": "[variables('LogName')]",
+      "resourceGroup": "[variables('SharedResourceGroupName')]",
+      "type": "Microsoft.Resources/deployments",
+      "properties": {
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "[concat(variables('LogTemplate'), parameters('containerSasToken'))]",
+          "contentVersion": "1.0.0.0"
+        },
+        "parameters": {
+          "name": {
+            "value": "[variables('LogName')]"
+          }
+        }
+      },
+      "dependsOn": [
+      ]
+    },
+    {
+      "apiVersion": "2017-05-10",
+      "name": "[variables('AppInsightName')]",
+      "resourceGroup": "[variables('SharedResourceGroupName')]",
+      "type": "Microsoft.Resources/deployments",
+      "properties": {
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "[concat(variables('AppInisghtsTemplate'), parameters('containerSasToken'))]",
+          "contentVersion": "1.0.0.0"
+        },
+        "parameters": {
+          "name": {
+            "value": "[variables('AppInsightName')]"
+          },
+          "logName": {
+            "value": "[variables('LogName')]"
+          },
+          "logResourceGroupName": {
+            "value": "[variables('SharedResourceGroupName')]"
+          }
+
+        }
+      },
+      "dependsOn": [
+        "[concat('Microsoft.Resources/deployments/',variables('LogName'))]"
+      ]
+    }
+  ],
+  "outputs": {}
+}

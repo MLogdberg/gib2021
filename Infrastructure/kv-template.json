@@ -1,0 +1,127 @@
+{
+    "$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "name": {
+            "type": "string"
+        },
+        "location": {
+            "type": "string",
+             "defaultValue": "northeurope"
+        },
+        "sku": {
+            "type": "string",
+            "defaultValue": "Standard"
+        },
+        "accessPolicies": {
+            "type": "array",
+            "defaultValue": [
+                {
+                    "objectId": "6b19f405-8567-4f99-99eb-e6ca8e7f1e08",
+                    "tenantId": "2c821662-e5b4-477c-9108-4feaff778b74",
+                    "permissions": {
+                        "keys": [
+                            "Get",
+                            "List",
+                            "Update",
+                            "Create",
+                            "Import",
+                            "Delete",
+                            "Recover",
+                            "Backup",
+                            "Restore"
+                        ],
+                        "secrets": [
+                            "Get",
+                            "List",
+                            "Set",
+                            "Delete",
+                            "Recover",
+                            "Backup",
+                            "Restore"
+                        ],
+                        "certificates": [
+                            "Get",
+                            "List",
+                            "Update",
+                            "Create",
+                            "Import",
+                            "Delete",
+                            "Recover",
+                            "Backup",
+                            "Restore",
+                            "ManageContacts",
+                            "ManageIssuers",
+                            "GetIssuers",
+                            "ListIssuers",
+                            "SetIssuers",
+                            "DeleteIssuers"
+                        ]
+                    },
+                    "applicationId": ""
+                }
+            ]
+        },
+        "enabledForDeployment": {
+            "type": "bool",
+            "defaultValue" : true
+        },
+        "enabledForTemplateDeployment": {
+            "type": "bool",
+            "defaultValue" : true
+        },
+        "enabledForDiskEncryption": {
+            "type": "bool",
+            "defaultValue" : false
+        },
+        "enableRbacAuthorization": {
+            "type": "bool",
+            "defaultValue" : false
+        },
+        "enableSoftDelete": {
+            "type": "bool"
+            ,
+            "defaultValue" : true
+        },
+        "softDeleteRetentionInDays": {
+            "type": "int",
+            "defaultValue" : 90
+        },
+        "networkAcls": {
+            "type": "object",
+            "defaultValue" :   {
+                "defaultAction": "allow",
+                "bypass": "AzureServices",
+                "ipRules": [],
+                "virtualNetworkRules": []
+            }
+        }
+    },
+    "variables": {},
+    "resources": [
+        {
+            "apiVersion": "2018-02-14",
+            "name": "[parameters('name')]",
+            "location": "[parameters('location')]",
+            "type": "Microsoft.KeyVault/vaults",
+            "properties": {
+                "enabledForDeployment": "[parameters('enabledForDeployment')]",
+                "enabledForTemplateDeployment": "[parameters('enabledForTemplateDeployment')]",
+                "enabledForDiskEncryption": "[parameters('enabledForDiskEncryption')]",
+                "enableRbacAuthorization": "[parameters('enableRbacAuthorization')]",
+                "accessPolicies": "[parameters('accessPolicies')]",
+                "tenantId": "[subscription().tenantId]",
+                "sku": {
+                    "name": "[parameters('sku')]",
+                    "family": "A"
+                },
+                "enableSoftDelete": "[parameters('enableSoftDelete')]",
+                "softDeleteRetentionInDays": "[parameters('softDeleteRetentionInDays')]",
+                "networkAcls": "[parameters('networkAcls')]"
+            },
+            "tags": {},
+            "dependsOn": []
+        }
+    ],
+    "outputs": {}
+}
